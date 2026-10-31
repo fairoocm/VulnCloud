@@ -1,6 +1,6 @@
 
 
-\# VulnCloud 🔐
+\# VulnCloud 
 
 
 
@@ -12,7 +12,7 @@ VulnCloud is a Python-based security assessment project designed to help identif
 
 
 
-\## 🎯 Project Objectives
+\##  Project Objectives
 
 
 
@@ -48,7 +48,7 @@ VulnCloud is a Python-based security assessment project designed to help identif
 
 
 
-\## ✅ Current Features
+\##  Current Features
 
 
 
