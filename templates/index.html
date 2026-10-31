@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VulnCloud | Security Assessment</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #101827;
+            color: white;
+        }
+
+        header {
+            padding: 22px 8%;
+            background: #172338;
+            border-bottom: 1px solid #293951;
+        }
+
+        header h1 {
+            color: #38bdf8;
+            margin: 0;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 45px auto;
+            padding: 20px;
+        }
+
+        .panel {
+            background: #1b293d;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 95%;
+            padding: 14px;
+            border: 1px solid #40536b;
+            border-radius: 7px;
+            background: #101827;
+            color: white;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 12px 25px;
+            background: #0284c7;
+            color: white;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #40536b;
+        }
+
+        .present {
+            color: #4ade80;
+        }
+
+        .missing {
+            color: #fb7185;
+        }
+
+        .error {
+            color: #fb7185;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>VulnCloud</h1>
+    <p>Web-Based Security Assessment Platform</p>
+</header>
+
+<main>
+
+    <section class="panel">
+        <h2>Security Assessment</h2>
+        <p>Enter your authorized local testing website.</p>
+
+        <form method="POST">
+            <input
+                type="url"
+                name="target"
+                placeholder="http://127.0.0.1:5000"
+                value="{{ target }}"
+                required
+            >
+
+            <br>
+            <button type="submit">Start Security Scan</button>
+        </form>
+    </section>
+
+    {% if scan_result %}
+
+    <section class="panel">
+        <h2>Assessment Results</h2>
+
+        {% if scan_result.success %}
+
+            <p><strong>Target:</strong> {{ scan_result.target }}</p>
+            <p><strong>HTTP Status:</strong> {{ scan_result.status_code }}</p>
+
+            <h3>HTTP Security Headers</h3>
+
+            <table>
+                <tr>
+                    <th>Security Header</th>
+                    <th>Status</th>
+                    <th>Recommendation</th>
+                </tr>
+
+                {% for item in scan_result.headers %}
+                <tr>
+                    <td>{{ item.name }}</td>
+
+                    <td class="{{ 'present' if item.status == 'PRESENT' else 'missing' if item.status == 'MISSING' else 'na' }}">
+    {{ item.status }}
+</td>
+                    <td>{{ item.recommendation }}</td>
+                </tr>
+                {% endfor %}
+
+            </table>
+
+        {% else %}
+
+            <p class="error">Scan failed: {{ scan_result.error }}</p>
+
+        {% endif %}
+    </section>
+
+    {% endif %}
+
+</main>
+
+</body>
+</html>

@@ -1,12 +1,13 @@
 
 import requests
+from urllib.parse import urlparse
 
 SECURITY_HEADERS = {
     "Strict-Transport-Security":
         "Helps enforce HTTPS connections.",
 
     "Content-Security-Policy":
-        "Helps protect against certain injection attacks.",
+        "Helps reduce certain content injection risks.",
 
     "X-Content-Type-Options":
         "Helps prevent MIME type sniffing.",
@@ -21,39 +22,52 @@ SECURITY_HEADERS = {
 
 def analyze_headers(url):
 
-    print("\n[*] VulnCloud HTTP Security Analyzer")
-    print("[*] Target:", url)
+    parsed_url = urlparse(url)
+
+    if parsed_url.scheme not in ("http", "https") or parsed_url.hostname not in (
+        "localhost", "127.0.0.1"
+    ):
+        return {
+            "success": False,
+            "error": "Only localhost targets are allowed."
+        }
 
     try:
         response = requests.get(
             url,
             timeout=10,
-            allow_redirects=True
+            allow_redirects=False
         )
 
-        print("\n[+] HTTP Status:", response.status_code)
-
-        print("\n--- Security Header Analysis ---")
+        results = []
 
         for header, recommendation in SECURITY_HEADERS.items():
 
-            if header in response.headers:
-                print(f"[+] PRESENT: {header}")
-            else:
-                print(f"[-] MISSING: {header}")
-                print("    Recommendation:", recommendation)
+            if header == "Strict-Transport-Security" and parsed_url.scheme != "https":
+                status = "NOT APPLICABLE"
 
-        print("\n[*] Analysis completed.")
+            elif header in response.headers:
+                status = "PRESENT"
+
+            else:
+                status = "MISSING"
+
+            results.append({
+                "name": header,
+                "status": status,
+                "recommendation": recommendation
+            })
+
+        return {
+            "success": True,
+            "target": url,
+            "status_code": response.status_code,
+            "headers": results
+        }
 
     except requests.RequestException as error:
-        print("\n[!] Connection error:", error)
 
-
-if __name__ == "__main__":
-
-    target = input("Enter authorized HTTPS website URL: ").strip()
-
-    if not target.startswith("https://"):
-        print("[!] Please enter an HTTPS URL.")
-    else:
-        analyze_headers(target)
+        return {
+            "success": False,
+            "error": str(error)
+        }
