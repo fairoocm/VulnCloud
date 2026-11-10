@@ -28,7 +28,7 @@ class PinnedHTTPSConnection(http.client.HTTPSConnection):
         )
 
 
-def safe_https_headers(url):
+def safe_https_headers(url, pinned_ip=None):
 
     parsed = urlparse(url)
     hostname = parsed.hostname
@@ -42,28 +42,41 @@ def safe_https_headers(url):
     if parsed.username or parsed.password:
         raise ValueError("URLs containing credentials are not allowed.")
 
-    records = socket.getaddrinfo(
-        hostname,
-        443,
-        type=socket.SOCK_STREAM
-    )
-
-    addresses = list({
-        record[4][0] for record in records
-    })
-
-    if not addresses:
-        raise ValueError("No IP addresses found.")
-
-    for address in addresses:
-        ip = ipaddress.ip_address(address)
+    # Use the previously validated IP when supplied.
+    if pinned_ip is not None:
+        ip = ipaddress.ip_address(pinned_ip)
 
         if not ip.is_global:
-            raise ValueError("Target resolves to a non-public IP.")
+            raise ValueError("Target IP must be public.")
+
+        selected_ip = str(ip)
+
+    else:
+        # Backward-compatible DNS resolution for existing callers.
+        records = socket.getaddrinfo(
+            hostname,
+            443,
+            type=socket.SOCK_STREAM
+        )
+
+        addresses = list({
+            record[4][0] for record in records
+        })
+
+        if not addresses:
+            raise ValueError("No IP addresses found.")
+
+        for address in addresses:
+            ip = ipaddress.ip_address(address)
+
+            if not ip.is_global:
+                raise ValueError("Target resolves to a non-public IP.")
+
+        selected_ip = addresses[0]
 
     connection = PinnedHTTPSConnection(
         hostname,
-        addresses[0],
+        selected_ip,
         timeout=10
     )
 
