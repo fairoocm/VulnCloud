@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VulnCloud | Assessment History</title>
+<style>
+:root{--bg:#0b1220;--panel:#111c2e;--soft:#16243a;--border:#263750;--text:#e5edf8;--muted:#9aabc2;--blue:#38bdf8;--green:#4ade80;--red:#fb7185}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Arial,sans-serif}
+header{padding:22px max(5%,calc((100% - 1000px)/2));background:#111c2e;border-bottom:1px solid var(--border)}
+h1{margin:0;color:var(--blue);font-size:24px}header p{margin:4px 0;color:var(--muted);font-size:13px}
+main{max-width:1000px;margin:34px auto;padding:0 18px 40px}.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+a{color:#7dd3fc;text-decoration:none}a:hover{text-decoration:underline}.back{font-size:13px}
+.table-wrap{overflow-x:auto;margin-top:18px;border:1px solid var(--border);border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:13px;border-bottom:1px solid var(--border);font-size:13px}
+th{background:#1b2b42;color:#dbeafe;text-transform:uppercase;font-size:11px;letter-spacing:.4px}
+tr:last-child td{border-bottom:0}.muted{color:var(--muted)}.good{color:var(--green)}.bad{color:var(--red)}
+.empty{padding:28px 10px;text-align:center;color:var(--muted)}
+@media(max-width:600px){.panel{padding:15px}main{margin-top:20px}}
+</style>
+</head>
+<body>
+<header><h1>VulnCloud</h1><p>Assessment History</p></header>
+<main><section class="panel">
+<div class="top"><div><h2 style="margin:0 0 4px;">Previous Assessments</h2><span class="muted">Latest 100 saved records</span></div><a class="back" href="{{ url_for('dashboard') }}">← Back to dashboard</a></div>
+{% if assessments %}
+<div class="table-wrap"><table>
+<thead><tr><th>Scan date (UTC)</th><th>Target</th><th>HTTP status</th><th>Score</th><th>Rating / result</th><th>Details</th></tr></thead>
+<tbody>
+{% for item in assessments %}
+<tr>
+<td>{{ item.scanned_at.replace('T',' ').replace('+00:00','') }}</td>
+<td style="overflow-wrap:anywhere;">{{ item.target or 'N/A' }}</td>
+<td>{{ item.status_code if item.status_code is not none else '—' }}</td>
+<td>{{ (item.score|string + '/100') if item.score is not none else '—' }}</td>
+<td class="{{ 'good' if item.success else 'bad' }}">{{ item.rating if item.success else 'Failed' }}</td>
+<td><a href="{{ url_for('history_detail', assessment_id=item.id) }}">View details</a></td>
+</tr>
+{% endfor %}
+</tbody></table></div>
+{% else %}
+<div class="empty"><h3>No assessments saved yet</h3><p>Run your first scan from the dashboard. It will appear here automatically.</p></div>
+{% endif %}
+</section></main>
+</body></html>

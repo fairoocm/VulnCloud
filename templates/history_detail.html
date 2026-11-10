@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VulnCloud | Assessment Details</title>
+<style>
+:root{--bg:#0b1220;--panel:#111c2e;--soft:#16243a;--border:#263750;--text:#e5edf8;--muted:#9aabc2;--blue:#38bdf8;--green:#4ade80;--red:#fb7185;--amber:#fbbf24}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.55 Arial,sans-serif}
+header{padding:20px max(5%,calc((100% - 950px)/2));background:#111c2e;border-bottom:1px solid var(--border)}
+h1{margin:0;color:var(--blue);font-size:23px}main{max-width:950px;margin:30px auto;padding:0 18px 40px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px}
+a{color:#7dd3fc;text-decoration:none}a:hover{text-decoration:underline}.muted{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.item{background:var(--soft);border:1px solid var(--border);border-radius:9px;padding:12px;overflow-wrap:anywhere}
+.item span{display:block;color:var(--muted);font-size:11px}.item strong{font-size:14px}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:11px;border-bottom:1px solid var(--border);vertical-align:top}th{color:#dbeafe;background:#1b2b42;font-size:11px;text-transform:uppercase}td{font-size:13px}
+.good{color:var(--green)}.bad{color:var(--red)}.na{color:var(--amber)}.recommendation{background:#0d1727;border:1px solid var(--border);border-radius:8px;padding:12px;margin:9px 0}
+.recommendation p{margin:5px 0}.wrap{overflow-x:auto}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.panel{padding:15px}}
+</style></head>
+<body><header><h1>VulnCloud</h1><p class="muted">Saved assessment details</p></header>
+<main>
+<p><a href="{{ url_for('history') }}">← Back to history</a></p>
+<section class="panel">
+<h2 style="margin-top:0;">Assessment #{{ assessment.id }}</h2>
+<div class="grid">
+<div class="item"><span>Target</span><strong>{{ assessment.target or 'N/A' }}</strong></div>
+<div class="item"><span>Scanned at (UTC)</span><strong>{{ assessment.scanned_at }}</strong></div>
+<div class="item"><span>HTTP status</span><strong>{{ assessment.status_code if assessment.status_code is not none else 'N/A' }}</strong></div>
+<div class="item"><span>Result</span><strong class="{{ 'good' if assessment.success else 'bad' }}">{{ assessment.rating or ('Successful' if assessment.success else 'Failed') }}</strong></div>
+</div>
+{% if assessment.success %}
+<h3>Security score: {{ assessment.score }}/100</h3>
+<p class="muted">{{ assessment.result.score.message }}</p>
+{% else %}<p class="bad">{{ assessment.result.error }}</p>{% endif %}
+</section>
+{% if assessment.success %}
+<section class="panel"><h3>HTTP Security Headers</h3><div class="wrap"><table>
+<tr><th>Header</th><th>Status</th><th>Purpose</th></tr>
+{% for item in assessment.result.headers %}<tr><td>{{ item.name }}</td><td class="{{ 'good' if item.status == 'PRESENT' else 'bad' if item.status == 'MISSING' else 'na' }}">{{ item.status }}</td><td>{{ item.recommendation }}</td></tr>{% endfor %}
+</table></div></section>
+<section class="panel"><h3>TLS / SSL</h3>
+{% if assessment.result.tls and assessment.result.tls.success %}
+<p>Verification: {{ assessment.result.tls.verification }} · Version: {{ assessment.result.tls.tls_version }}</p>
+<p>Issuer: {{ assessment.result.tls.issuer }}</p><p>Expiry: {{ assessment.result.tls.expiry_date }} · Days remaining: {{ assessment.result.tls.days_remaining }}</p>
+{% elif assessment.result.tls %}<p class="bad">{{ assessment.result.tls.error }}</p>
+{% else %}<p class="muted">Not applicable: target uses HTTP, not HTTPS.</p>{% endif %}
+</section>
+<section class="panel"><h3>Recommendations</h3>
+{% for item in assessment.result.recommendations %}<div class="recommendation"><strong>{{ item.title }}</strong><p><b>Finding:</b> {{ item.finding }}</p><p><b>Why:</b> {{ item.why }}</p><p><b>Fix:</b> {{ item.fix }}</p></div>{% else %}<p class="muted">No recommendations.</p>{% endfor %}
+</section>
+{% endif %}
+</main></body></html>

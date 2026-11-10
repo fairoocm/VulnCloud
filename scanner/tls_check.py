@@ -1,24 +1,40 @@
 import socket
 import ssl
+import ipaddress
 import certifi
 from datetime import datetime, timezone
 
 
-def check_certificate(hostname):
+def check_certificate(hostname, pinned_ip=None):
 
     context = ssl.create_default_context(cafile=certifi.where())
 
     try:
-        with socket.create_connection((hostname, 443), timeout=10) as sock:
-            with context.wrap_socket(sock, server_hostname=hostname) as tls:
+        if not hostname:
+            raise ValueError("A valid hostname is required.")
+
+        # Connect to the previously validated IP when supplied.
+        connection_host = hostname
+
+        if pinned_ip is not None:
+            ip = ipaddress.ip_address(pinned_ip)
+
+            if not ip.is_global:
+                raise ValueError("Target IP must be public.")
+
+            connection_host = str(ip)
+
+        with socket.create_connection(
+            (connection_host, 443), timeout=10
+        ) as sock:
+
+            # Keep hostname verification and SNI enabled.
+            with context.wrap_socket(
+                sock, server_hostname=hostname
+            ) as tls:
 
                 certificate = tls.getpeercert()
 
-                print("\n[*] VulnCloud TLS Certificate Analysis")
-                print("[+] Hostname:", hostname)
-                print("[+] TLS Version:", tls.version())
-
-                # Extract certificate issuer
                 issuer = certificate.get("issuer", ())
                 issuer_names = [
                     value
@@ -26,10 +42,9 @@ def check_certificate(hostname):
                     for key, value in rdn
                 ]
 
-                print("[+] Certificate Issuer:", ", ".join(issuer_names))
-
-                # Extract certificate expiry date
                 expiry_text = certificate.get("notAfter")
+                expiry_date = None
+                days_remaining = None
 
                 if expiry_text:
                     expiry_date = datetime.fromtimestamp(
@@ -38,16 +53,37 @@ def check_certificate(hostname):
                     )
 
                     remaining = expiry_date - datetime.now(timezone.utc)
+                    days_remaining = remaining.days
 
-                    print("[+] Expiry Date:", expiry_date)
-                    print("[+] Days Remaining:", remaining.days)
+                return {
+                    "success": True,
+                    "hostname": hostname,
+                    "tls_version": tls.version(),
+                    "issuer": ", ".join(issuer_names),
+                    "expiry_date": (
+                        expiry_date.isoformat() if expiry_date else None
+                    ),
+                    "days_remaining": days_remaining,
+                    "verification": "Valid",
+                    "error": None
+                }
 
-                print("\n[*] Analysis completed.")
-
-    except (OSError, ssl.SSLError) as error:
-        print("[-] Connection failed:", error)
+    except (OSError, ssl.SSLError, ValueError) as error:
+        return {
+            "success": False,
+            "hostname": hostname,
+            "tls_version": None,
+            "issuer": None,
+            "expiry_date": None,
+            "days_remaining": None,
+            "verification": "Failed",
+            "error": str(error)
+        }
 
 
 if __name__ == "__main__":
     target = input("Enter authorized website hostname: ").strip()
-    check_certificate(target)
+    result = check_certificate(target)
+
+    for key, value in result.items():
+        print(f"{key}: {value}")

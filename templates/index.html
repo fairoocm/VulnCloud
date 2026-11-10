@@ -1,156 +1,281 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0b1220">
     <title>VulnCloud | Security Assessment</title>
-
     <style>
+        :root {
+            --bg: #0b1220;
+            --surface: #111c2e;
+            --surface-soft: #16243a;
+            --border: #263750;
+            --text: #e5edf8;
+            --muted: #9aabc2;
+            --blue: #38bdf8;
+            --green: #4ade80;
+            --red: #fb7185;
+            --amber: #fbbf24;
+        }
+        * { box-sizing: border-box; }
         body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #101827;
-            color: white;
+            margin: 0; font-family: Arial, sans-serif;
+            background: radial-gradient(circle at top right, #142b46 0, var(--bg) 42%);
+            color: var(--text); line-height: 1.55;
         }
-
         header {
-            padding: 22px 8%;
-            background: #172338;
-            border-bottom: 1px solid #293951;
+            padding: 22px max(5%, calc((100% - 1080px) / 2));
+            background: rgba(17, 28, 46, .94);
+            border-bottom: 1px solid var(--border);
         }
-
-        header h1 {
-            color: #38bdf8;
-            margin: 0;
+        .brand-row { display: flex; align-items: center; gap: 12px; }
+        .brand-mark {
+            display: grid; place-items: center; width: 42px; height: 42px;
+            border-radius: 12px; background: #123653; color: var(--blue);
+            font-weight: 800; font-size: 20px;
         }
-
-        main {
-            max-width: 900px;
-            margin: 45px auto;
-            padding: 20px;
-        }
-
+        header h1 { color: var(--blue); margin: 0; font-size: 25px; letter-spacing: .3px; }
+        header p { color: var(--muted); margin: 3px 0 0; font-size: 13px; }
+        main { max-width: 1080px; margin: 34px auto; padding: 0 20px 45px; }
         .panel {
-            background: #1b293d;
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 25px;
+            background: rgba(17, 28, 46, .96); border: 1px solid var(--border);
+            padding: 25px; border-radius: 16px; margin-bottom: 22px;
+            box-shadow: 0 12px 32px rgba(0,0,0,.16);
         }
-
-        input {
-            width: 95%;
-            padding: 14px;
-            border: 1px solid #40536b;
-            border-radius: 7px;
-            background: #101827;
-            color: white;
+        h2 { margin: 0 0 8px; font-size: 21px; }
+        h3 { margin: 25px 0 12px; font-size: 16px; color: #d7e8fa; }
+        .muted, .intro { color: var(--muted); }
+        .intro { margin: 0 0 18px; }
+        .field-label { display: block; font-size: 13px; color: #c4d2e4; margin-bottom: 8px; }
+        .target-input {
+            width: 100%; padding: 14px 15px; border: 1px solid #40536b;
+            border-radius: 9px; background: #0b1423; color: white; font-size: 15px;
         }
-
+        input:focus { outline: 2px solid #0ea5e9; outline-offset: 2px; }
+        .permission {
+            display: flex; align-items: flex-start; gap: 10px;
+            margin: 15px 0; color: #c5d3e5; font-size: 13px;
+        }
+        .permission input { margin-top: 4px; accent-color: #0284c7; }
         button {
-            margin-top: 15px;
-            padding: 12px 25px;
-            background: #0284c7;
-            color: white;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
+            padding: 12px 19px; background: #0284c7; color: white; border: 0;
+            border-radius: 9px; cursor: pointer; font-weight: 700; font-size: 14px;
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        button:hover { background: #0369a1; }
+        button:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+        .button-secondary { background: #243b56; border: 1px solid #45617f; }
+        .button-secondary:hover { background: #304d6d; }
+        .result-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            gap: 16px; flex-wrap: wrap;
         }
-
-        th, td {
-            padding: 13px;
-            text-align: left;
-            border-bottom: 1px solid #40536b;
+        .meta-grid {
+            display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px; margin: 18px 0;
         }
-
-        .present {
-            color: #4ade80;
+        .meta-card, .metric-card {
+            background: var(--surface-soft); border: 1px solid var(--border);
+            border-radius: 11px; padding: 14px;
         }
-
-        .missing {
-            color: #fb7185;
+        .meta-card span, .metric-card span {
+            display: block; color: var(--muted); font-size: 12px; margin-bottom: 4px;
         }
-
-        .error {
-            color: #fb7185;
+        .meta-card strong { overflow-wrap: anywhere; font-size: 14px; }
+        .score-layout {
+            display: grid; grid-template-columns: minmax(160px, .7fr) 2fr;
+            align-items: center; gap: 22px;
+        }
+        .score-value { font-size: 42px; font-weight: 800; color: var(--blue); line-height: 1.1; }
+        .score-value small { color: var(--muted); font-size: 16px; font-weight: 500; }
+        .score-rating { font-weight: 700; font-size: 18px; margin: 7px 0 2px; }
+        .score-message { color: var(--muted); margin: 0; font-size: 13px; }
+        .progress-track { height: 10px; background: #26364d; border-radius: 20px; overflow: hidden; margin-top: 13px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); border-radius: 20px; }
+        .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0 4px; }
+        .metric-card strong { font-size: 22px; }
+        .good { color: var(--green); }
+        .bad { color: var(--red); }
+        .na { color: var(--amber); }
+        .error { color: var(--red); }
+        .status-pill {
+            display: inline-block; padding: 4px 9px; border-radius: 30px;
+            font-size: 11px; font-weight: 800; letter-spacing: .35px;
+            background: #26364d; white-space: nowrap;
+        }
+        .status-pill.good { background: rgba(74,222,128,.12); }
+        .status-pill.bad { background: rgba(251,113,133,.12); }
+        .status-pill.na { background: rgba(251,191,36,.12); }
+        .table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 620px; }
+        th, td { padding: 13px 14px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+        th { background: #1b2b42; color: #dbeafe; font-size: 12px; text-transform: uppercase; letter-spacing: .45px; }
+        td { font-size: 13px; color: #cbd8e8; }
+        tr:last-child td { border-bottom: 0; }
+        .recommendation {
+            background: #0d1727; border: 1px solid var(--border);
+            border-left: 3px solid var(--amber); border-radius: 9px;
+            padding: 14px 16px; margin: 10px 0;
+        }
+        .recommendation p { margin: 6px 0; font-size: 13px; color: #cbd8e8; }
+        .recommendation strong { color: #f1f6fd; }
+        .tls-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .tls-item { background: #0d1727; border: 1px solid var(--border); padding: 11px 13px; border-radius: 9px; overflow-wrap: anywhere; }
+        .tls-item span { display: block; color: var(--muted); font-size: 11px; }
+        .tls-item strong { font-size: 13px; }
+        .empty-state { color: var(--muted); padding: 12px 0; }
+        footer { text-align: center; color: #74869e; font-size: 12px; padding: 8px 20px 25px; }
+        @media (max-width: 650px) {
+            main { margin-top: 20px; padding: 0 13px 30px; }
+            .panel { padding: 18px; border-radius: 13px; }
+            .score-layout { grid-template-columns: 1fr; gap: 10px; }
+            .meta-grid, .tls-grid { grid-template-columns: 1fr; }
+            .metrics { gap: 8px; }
+            .metric-card { padding: 11px; }
+            .metric-card strong { font-size: 19px; }
+            header { padding: 17px 18px; }
         }
     </style>
 </head>
-
 <body>
-
 <header>
-    <h1>VulnCloud</h1>
-    <p>Web-Based Security Assessment Platform</p>
+    <div class="brand-row">
+        <div class="brand-mark">V</div>
+        <div>
+            <h1>VulnCloud</h1>
+            <p>Web-Based Security Assessment Platform</p>
+            <p style="margin-top:8px;"><a href="{{ url_for('history') }}" style="color:#7dd3fc;text-decoration:none;font-weight:700;">Assessment History →</a></p>
+        </div>
+    </div>
 </header>
 
 <main>
-
     <section class="panel">
         <h2>Security Assessment</h2>
-        <p>Enter your authorized local testing website.</p>
-
+        <p class="intro">Assess a local test URL or a public website you own or have explicit permission to test.</p>
         <form method="POST">
-            <input
-                type="url"
-                name="target"
-                placeholder="http://127.0.0.1:5000"
-                value="{{ target }}"
-                required
-            >
-
-            <br>
+            <label class="field-label" for="target">Target URL</label>
+            <input class="target-input" id="target" type="url" name="target"
+                   placeholder="http://127.0.0.1:5000" value="{{ target }}" required>
+            <label class="permission">
+                <input type="checkbox" name="authorized" value="yes" {{ 'checked' if authorized else '' }}>
+                <span>I own this website or have explicit permission to test it.</span>
+            </label>
             <button type="submit">Start Security Scan</button>
         </form>
     </section>
 
     {% if scan_result %}
-
     <section class="panel">
-        <h2>Assessment Results</h2>
-
         {% if scan_result.success %}
+            <div class="result-top">
+                <div>
+                    <h2>Assessment Overview</h2>
+                    <p class="muted" style="margin:4px 0 0;">Scan completed successfully.</p>
+                </div>
+                <form method="POST" action="{{ url_for('download_report') }}">
+                    <input type="hidden" name="target" value="{{ scan_result.target }}">
+                    {% if authorized %}<input type="hidden" name="authorized" value="yes">{% endif %}
+                    <button class="button-secondary" type="submit">Download PDF Report</button>
+                </form>
+            </div>
 
-            <p><strong>Target:</strong> {{ scan_result.target }}</p>
-            <p><strong>HTTP Status:</strong> {{ scan_result.status_code }}</p>
+            <div class="meta-grid">
+                <div class="meta-card"><span>Target</span><strong>{{ scan_result.target }}</strong></div>
+                <div class="meta-card"><span>HTTP Status</span><strong>{{ scan_result.status_code }}</strong></div>
+            </div>
+
+            {% if history_id %}
+            <p class="muted" style="font-size:12px;">Assessment saved to history ·
+                <a href="{{ url_for('history_detail', assessment_id=history_id) }}" style="color:#7dd3fc;">View saved record</a>
+            </p>
+            {% endif %}
+
+            <h3>Security Score</h3>
+            <div class="score-layout">
+                <div>
+                    <div class="score-value">{{ scan_result.score.score }}<small> / 100</small></div>
+                    <div class="score-rating">{{ scan_result.score.rating }}</div>
+                </div>
+                <div>
+                    <p class="score-message">{{ scan_result.score.message }}</p>
+                    <div class="progress-track" role="progressbar"
+                         aria-label="Security score" aria-valuemin="0" aria-valuemax="100"
+                         aria-valuenow="{{ scan_result.score.score }}">
+                        <div class="progress-fill" style="width: {{ scan_result.score.score }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            {% set ns = namespace(present=0, missing=0, na=0) %}
+            {% for item in scan_result.headers %}
+                {% if item.status == 'PRESENT' %}{% set ns.present = ns.present + 1 %}
+                {% elif item.status == 'MISSING' %}{% set ns.missing = ns.missing + 1 %}
+                {% else %}{% set ns.na = ns.na + 1 %}{% endif %}
+            {% endfor %}
+            <div class="metrics">
+                <div class="metric-card"><span>Headers present</span><strong class="good">{{ ns.present }}</strong></div>
+                <div class="metric-card"><span>Headers missing</span><strong class="bad">{{ ns.missing }}</strong></div>
+                <div class="metric-card"><span>Not applicable</span><strong class="na">{{ ns.na }}</strong></div>
+            </div>
 
             <h3>HTTP Security Headers</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>Security Header</th><th>Status</th><th>Purpose</th></tr></thead>
+                    <tbody>
+                    {% for item in scan_result.headers %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td>
+                            {% if item.status == 'PRESENT' %}<span class="status-pill good">PRESENT</span>
+                            {% elif item.status == 'MISSING' %}<span class="status-pill bad">MISSING</span>
+                            {% else %}<span class="status-pill na">NOT APPLICABLE</span>{% endif %}
+                        </td>
+                        <td>{{ item.recommendation }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-            <table>
-                <tr>
-                    <th>Security Header</th>
-                    <th>Status</th>
-                    <th>Recommendation</th>
-                </tr>
+            <h3>TLS / SSL Certificate Analysis</h3>
+            {% if scan_result.tls %}
+                {% if scan_result.tls.success %}
+                <div class="tls-grid">
+                    <div class="tls-item"><span>Certificate verification</span><strong class="{{ 'good' if scan_result.tls.verification == 'VALID' else 'bad' }}">{{ scan_result.tls.verification }}</strong></div>
+                    <div class="tls-item"><span>TLS version</span><strong>{{ scan_result.tls.tls_version }}</strong></div>
+                    <div class="tls-item"><span>Certificate issuer</span><strong>{{ scan_result.tls.issuer }}</strong></div>
+                    <div class="tls-item"><span>Expiry date</span><strong>{{ scan_result.tls.expiry_date }}</strong></div>
+                    <div class="tls-item"><span>Days remaining</span><strong>{{ scan_result.tls.days_remaining }}</strong></div>
+                </div>
+                {% else %}
+                <p class="error">TLS analysis failed: {{ scan_result.tls.error }}</p>
+                {% endif %}
+            {% elif scan_result.target.startswith('http://') %}
+                <p class="empty-state">Not applicable: the target uses HTTP, not HTTPS.</p>
+            {% endif %}
 
-                {% for item in scan_result.headers %}
-                <tr>
-                    <td>{{ item.name }}</td>
-
-                    <td class="{{ 'present' if item.status == 'PRESENT' else 'missing' if item.status == 'MISSING' else 'na' }}">
-    {{ item.status }}
-</td>
-                    <td>{{ item.recommendation }}</td>
-                </tr>
+            <h3>Automatic Security Recommendations</h3>
+            {% if scan_result.recommendations %}
+                {% for item in scan_result.recommendations %}
+                <div class="recommendation">
+                    <p><strong>{{ item.title }}</strong></p>
+                    <p><strong>Finding:</strong> {{ item.finding }}</p>
+                    <p><strong>Why it matters:</strong> {{ item.why }}</p>
+                    <p><strong>Suggested fix:</strong> {{ item.fix }}</p>
+                </div>
                 {% endfor %}
-
-            </table>
-
+            {% else %}
+                <p class="empty-state">No recommendations generated from the available checks.</p>
+            {% endif %}
         {% else %}
-
-            <p class="error">Scan failed: {{ scan_result.error }}</p>
-
+            <h2>Assessment Failed</h2>
+            <p class="error">{{ scan_result.error }}</p>
         {% endif %}
     </section>
-
     {% endif %}
-
 </main>
-
+<footer>VulnCloud · Educational security configuration assessment · Test only authorized targets</footer>
 </body>
 </html>
