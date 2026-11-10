@@ -42,8 +42,8 @@ def safe_https_headers(url, pinned_ip=None):
     if parsed.username or parsed.password:
         raise ValueError("URLs containing credentials are not allowed.")
 
-    # Use the previously validated IP when supplied.
     if pinned_ip is not None:
+
         ip = ipaddress.ip_address(pinned_ip)
 
         if not ip.is_global:
@@ -52,7 +52,6 @@ def safe_https_headers(url, pinned_ip=None):
         selected_ip = str(ip)
 
     else:
-        # Backward-compatible DNS resolution for existing callers.
         records = socket.getaddrinfo(
             hostname,
             443,
@@ -97,6 +96,10 @@ def safe_https_headers(url, pinned_ip=None):
         )
 
         response = connection.getresponse()
+
+        # Reject all 3xx responses. Never follow redirects.
+        if 300 <= response.status < 400:
+            raise ValueError("Redirect responses are not followed.")
 
         return {
             "status_code": response.status,
