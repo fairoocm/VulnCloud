@@ -1,25 +1,24 @@
-
 # VulnCloud
 
 ### Web Security Configuration Assessment Platform
 
-VulnCloud is a Python-based educational web security assessment tool designed to identify common HTTP security header weaknesses, inspect TLS certificates, calculate security scores, and generate assessment reports through a Flask-based dashboard.
+VulnCloud is a Python-based educational web security assessment platform built with Flask. It helps assess common website security configurations by checking HTTP security headers, verifying TLS/SSL certificates, calculating security scores, generating recommendations, maintaining assessment history, and producing PDF reports.
 
-The project focuses on safe, authorized security configuration assessments using explicit target authorization and validated network connections.
+The project is intended for educational use and authorized security configuration assessments.
 
 ## Features
 
 ### 1. HTTP Security Header Analysis
 - Checks important HTTP security headers.
-- Identifies missing and present headers.
+- Identifies present and missing headers.
 - Marks checks as not applicable when appropriate.
 - Provides security recommendations.
 
 ### 2. TLS/SSL Certificate Analysis
-- Inspects TLS certificates.
-- Checks certificate verification.
-- Reports TLS version and certificate issuer.
+- Verifies TLS certificates.
+- Reports the negotiated TLS version and certificate issuer.
 - Displays certificate expiry information and remaining validity.
+- Retains certificate and hostname verification.
 
 ### 3. Security Scoring
 - Calculates an overall security score.
@@ -28,13 +27,13 @@ The project focuses on safe, authorized security configuration assessments using
 
 ### 4. Automated Recommendations
 - Identifies security configuration weaknesses.
-- Explains why each finding matters.
+- Explains why findings matter.
 - Provides suggested remediation steps.
 
 ### 5. Web Dashboard
 - Flask-based assessment interface.
 - Displays scan results and security scores.
-- Supports authorized target assessment.
+- Supports authorized public website assessments.
 
 ### 6. Assessment History
 - Stores assessment results using SQLite.
@@ -47,18 +46,19 @@ The project focuses on safe, authorized security configuration assessments using
 
 ## Security Controls
 
-VulnCloud includes safeguards designed for authorized assessment:
+VulnCloud includes safeguards designed for authorized assessments:
 
-- Public scanning requires explicit authorization.
-- Public targets must be HTTPS on the standard port 443.
-- Public domains must be included in the local authorization list.
-- DNS results are checked for non-public IP addresses.
-- HTTPS connections use a validated, pinned IP address.
-- TLS connections retain hostname verification and SNI.
-- Redirect responses are rejected.
-- A restricted localhost demo is available for educational testing.
+- Public assessments require explicit authorization confirmation in the dashboard.
+- Supports standard HTTP (port 80) and HTTPS (port 443).
+- Validates DNS resolution and rejects non-public IP addresses.
+- Uses validated, pinned IP addresses for public HTTP/HTTPS connections.
+- HTTPS connections retain TLS certificate verification and hostname verification.
+- Uses Server Name Indication (SNI) for HTTPS.
+- Revalidates redirect destinations before following them.
+- Limits redirect handling to three redirects.
+- Provides a restricted localhost demonstration target.
 
-These controls reduce risks associated with unintended scanning and unsafe network connections. They do not make the application a substitute for a professional security testing framework.
+These safeguards reduce risks associated with unintended scanning and unsafe network connections. They do not guarantee that every network risk is eliminated.
 
 ## Technology Stack
 
@@ -66,23 +66,20 @@ These controls reduce risks associated with unintended scanning and unsafe netwo
 |---|---|
 | Python | Core development |
 | Flask | Web dashboard |
-| Requests | Local demo HTTP requests |
+| Requests | Local demonstration requests |
 | SQLite | Assessment history |
 | Certifi | Trusted CA certificates |
 | ReportLab | PDF report generation |
 | HTML, CSS, JavaScript | Dashboard interface |
-| Pytest | Automated testing |
 | Git and GitHub | Version control |
 
 ## Project Structure
 
 ```text
 VulnCloud/
-│
 ├── app.py
 ├── test_site.py
 ├── requirements.txt
-│
 ├── scanner/
 │   ├── headers.py
 │   ├── target_policy.py
@@ -91,16 +88,13 @@ VulnCloud/
 │   ├── scoring.py
 │   ├── recommendations.py
 │   └── history.py
-│
 ├── reports/
 │   ├── __init__.py
 │   └── pdf_report.py
-│
 ├── templates/
 │   ├── index.html
 │   ├── history.html
 │   └── history_detail.html
-│
 └── tests/
     ├── test_headers_integration.py
     ├── test_safe_http.py
@@ -113,7 +107,7 @@ VulnCloud/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/fairoocm/VulnCloud.git
+git clone -b main https://github.com/fairoocm/VulnCloud.git
 cd VulnCloud
 ```
 
@@ -124,8 +118,6 @@ python -m venv .venv
 ```
 
 ### 3. Activate the environment
-
-Windows PowerShell:
 
 ```powershell
 .venv\Scripts\Activate.ps1
@@ -173,52 +165,30 @@ Enter:
 http://localhost:5000
 ```
 
-Start the assessment from the dashboard.
+Start the assessment from the dashboard. The local demonstration target does not require public-target authorization.
 
-The local demonstration target does not require public-target authorization.
+## Public Website Assessment
 
-## Configuring Authorized Public Targets
+To assess a public website:
 
-Public assessments require a local configuration file named:
+1. Enter the website URL using HTTP or HTTPS on its standard port.
+2. Confirm that you own the target or have explicit permission to assess it.
+3. Enable the authorization confirmation checkbox.
+4. Start the assessment.
+5. Review the security findings, score, TLS information, and recommendations.
+6. Generate a PDF report if required.
 
-```text
-authorized_targets.json
-```
-
-Create this file in the project root with the following structure:
-
-```json
-{
-    "authorized_targets": [
-        "your-authorized-domain.example"
-    ]
-}
-```
-
-Replace the placeholder with a domain you own or have explicit permission to assess.
-
-Important:
-- Add domain names, not complete URLs.
-- Public targets must use HTTPS on port 443.
-- The dashboard authorization checkbox must also be enabled.
-- Never add targets without permission.
-- Do not commit `authorized_targets.json` to GitHub.
+The dashboard checkbox records the user's authorization confirmation; it does not grant permission. Always obtain permission from the website owner before scanning.
 
 ## Running Automated Tests
 
-Install pytest:
+Run the test suite from the project root:
 
 ```powershell
-python -m pip install pytest
+python -m unittest discover -s tests -v
 ```
 
-Run the complete test suite:
-
-```powershell
-python -m pytest -q
-```
-
-The Phase 10 integration test suite contains 11 tests covering target policy, safe HTTP connections, dashboard integration, and TLS certificate verification.
+The recovery verification run completed with 8 passing tests. This result describes that test run and is not a claim that every possible application behavior has been tested.
 
 ## Responsible Use
 
@@ -233,7 +203,7 @@ Do not use this project to scan unauthorized systems.
 
 A missing security header or a low security score does not automatically indicate an exploitable vulnerability. Findings should be reviewed in the context of the application.
 
-VulnCloud is not a complete penetration-testing tool, vulnerability scanner, or guarantee of security.
+VulnCloud is an educational security configuration assessment tool. It is not a complete penetration-testing framework or a guarantee of security.
 
 ## Developer
 
@@ -246,14 +216,16 @@ BCA Student | Cybersecurity Enthusiast
 
 ## Project Status
 
-**Phase 10 — Scanner Integration: Completed**
+**Phase 11 — Portfolio Preparation**
 
-- Dashboard and scanner integration
+Core scanner integration and recovery completed.
+
 - HTTP security header analysis
-- TLS certificate analysis
+- TLS certificate verification
+- Public URL assessment
 - Security scoring and recommendations
 - Assessment history
 - PDF reporting
-- Automated tests
+- Automated recovery tests
 
-**Phase 11 — Portfolio Documentation: In Progress**
+Latest verified recovery commit: `e3339ba`
